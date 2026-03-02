@@ -38,7 +38,6 @@ const yesBtn = document.getElementById('yes-btn');
 const noBtn = document.getElementById('no-btn');
 const music = document.getElementById('bg-music');
 
-// Autoplay audio
 music.muted = true;
 music.volume = 0.3;
 music.play().then(() => { music.muted = false }).catch(() => {
@@ -69,7 +68,7 @@ function handleYesClick() {
 }
 
 function showTeaseMessage(msg) {
-    const toast = document.getElementById('tease-toast');
+    let toast = document.getElementById('tease-toast');
     toast.textContent = msg;
     toast.classList.add('show');
     clearTimeout(toast._timer);
@@ -82,29 +81,24 @@ function handleNoClick() {
     const msgIndex = Math.min(noClickCount, noMessages.length-1);
     noBtn.textContent = noMessages[msgIndex];
 
-    // Grow Yes button but cap max size based on screen width
+    // Grow Yes button but cap max size
     const currentSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-    let maxSize = 50; // default max for desktop
-    if (window.innerWidth < 500) {
-        maxSize = 36; // smaller max for mobile
-    }
+    const maxSize = 50; // px
     yesBtn.style.fontSize = `${Math.min(currentSize*1.35, maxSize)}px`;
 
-    const padY = Math.min(18 + noClickCount*5, 30);
-    const padX = Math.min(45 + noClickCount*10, 70);
+    const padY = Math.min(18 + noClickCount*5, 40);
+    const padX = Math.min(45 + noClickCount*10, 90);
     yesBtn.style.padding = `${padY}px ${padX}px`;
 
-    // Shrink No button slightly
+    // Shrink No button
     if (noClickCount >= 2) {
         const noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
         noBtn.style.fontSize = `${Math.max(noSize*0.85, 10)}px`;
     }
 
-    // Swap GIF
     const gifIndex = Math.min(noClickCount, gifStages.length-1);
     swapGif(gifStages[gifIndex]);
 
-    // Enable runaway after 5 clicks
     if (noClickCount >= 5 && !runawayEnabled) {
         enableRunaway();
         runawayEnabled = true;
@@ -116,16 +110,13 @@ function swapGif(src) {
     setTimeout(() => { catGif.src = src; catGif.style.opacity = '1'; }, 200);
 }
 
-// Make No button always above Yes button
 function enableRunaway() {
-    noBtn.style.position = 'fixed';
-    noBtn.style.zIndex = '100'; // above Yes
     noBtn.addEventListener('mouseover', runAway);
     noBtn.addEventListener('touchstart', runAway, { passive: true });
 }
 
 function runAway() {
-    const margin = window.innerWidth < 500 ? 10 : 20; // smaller on mobile
+    const margin = 20;
     const btnW = noBtn.offsetWidth;
     const btnH = noBtn.offsetHeight;
     const maxX = window.innerWidth - btnW - margin;
@@ -134,6 +125,8 @@ function runAway() {
     const randomX = Math.random() * maxX + margin / 2;
     const randomY = Math.random() * maxY + margin / 2;
 
+    noBtn.style.position = 'fixed';
     noBtn.style.left = `${randomX}px`;
     noBtn.style.top = `${randomY}px`;
+    noBtn.style.zIndex = '50';
 }

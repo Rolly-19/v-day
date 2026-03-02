@@ -38,7 +38,7 @@ const yesBtn = document.getElementById('yes-btn');
 const noBtn = document.getElementById('no-btn');
 const music = document.getElementById('bg-music');
 
-// Start muted to bypass autoplay policy
+// Music autoplay setup
 music.muted = true;
 music.volume = 0.3;
 music.play().then(() => { music.muted = false }).catch(() => {
@@ -57,68 +57,78 @@ function toggleMusic() {
     }
 }
 
+// Yes button click handler
 function handleYesClick() {
-    // Show teasing message first, but always allow Yes to work
-    if (yesTeasedCount < yesTeasePokes.length) {
-        const msg = yesTeasePokes[yesTeasedCount];
+    if (!runawayEnabled) {
+        // Show teasing message in order
+        const msg = yesTeasePokes[Math.min(yesTeasedCount, yesTeasePokes.length - 1)];
         yesTeasedCount++;
         showTeaseMessage(msg);
+        return; // STOP here, don't redirect yet
     }
-    window.location.href = 'yes.html'; // always go to yes page
+
+    // Only redirect if runawayEnabled (after last No message)
+    window.location.href = 'yes.html';
 }
 
+// Show teaser message under buttons
 function showTeaseMessage(msg) {
-    let toast = document.getElementById('tease-toast');
+    const toast = document.getElementById('tease-toast');
     toast.textContent = msg;
     toast.classList.add('show');
     clearTimeout(toast._timer);
     toast._timer = setTimeout(() => toast.classList.remove('show'), 2500);
 }
 
+// No button click handler
 function handleNoClick() {
-    // Show the correct message
-    const msgIndex = Math.min(noClickCount, noMessages.length - 1);
+    noClickCount++;
+
+    // Update No button text
+    const msgIndex = Math.min(noClickCount - 1, noMessages.length - 1);
     noBtn.textContent = noMessages[msgIndex];
 
-    // Grow Yes button but cap for mobile
+    // Grow Yes button gradually, capped for mobile
     const currentSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
     const maxSize = window.innerWidth < 500 ? 36 : 50;
-    yesBtn.style.fontSize = `${Math.min(currentSize*1.35, maxSize)}px`;
-    const padY = Math.min(18 + noClickCount*5, window.innerWidth < 500 ? 30 : 40);
-    const padX = Math.min(45 + noClickCount*10, window.innerWidth < 500 ? 60 : 90);
+    yesBtn.style.fontSize = `${Math.min(currentSize * 1.35, maxSize)}px`;
+
+    const padY = Math.min(18 + noClickCount * 5, window.innerWidth < 500 ? 30 : 40);
+    const padX = Math.min(45 + noClickCount * 10, window.innerWidth < 500 ? 60 : 90);
     yesBtn.style.padding = `${padY}px ${padX}px`;
 
-    // Shrink No button
+    // Shrink No button slightly after 2 clicks
     if (noClickCount >= 2) {
         const noSize = parseFloat(window.getComputedStyle(noBtn).fontSize);
-        noBtn.style.fontSize = `${Math.max(noSize*0.85, 10)}px`;
+        noBtn.style.fontSize = `${Math.max(noSize * 0.85, 10)}px`;
     }
 
     // Swap GIF
     const gifIndex = Math.min(noClickCount, gifStages.length - 1);
     swapGif(gifStages[gifIndex]);
 
-    // Increase click count after using it for display
-    noClickCount++;
-
-    // Enable runaway immediately when last message is reached
+    // Enable runaway ONLY after last message ("You can't catch me anyway 😜")
     if (noClickCount >= noMessages.length && !runawayEnabled) {
         runawayEnabled = true;
         noBtn.style.position = 'fixed';
         noBtn.style.zIndex = '100';
         noBtn.addEventListener('mouseover', runAway);
         noBtn.addEventListener('touchstart', runAway, { passive: true });
+    }
 
-        // Start moving the No button right away
+    // Move No button immediately if runaway enabled
+    if (runawayEnabled) {
         runAway();
     }
 }
 
+// Swap GIF smoothly
 function swapGif(src) {
     catGif.style.opacity = '0';
     setTimeout(() => { catGif.src = src; catGif.style.opacity = '1'; }, 200);
 }
 
+// Runaway logic for No button
 function runAway() {
     const margin = 20;
     const btnW = noBtn.offsetWidth;

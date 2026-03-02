@@ -76,10 +76,8 @@ function showTeaseMessage(msg) {
 }
 
 function handleNoClick() {
-    noClickCount++;
-
-    // Show message based on click count
-    const msgIndex = Math.min(noClickCount - 1, noMessages.length - 1);
+    // Show the correct message
+    const msgIndex = Math.min(noClickCount, noMessages.length - 1);
     noBtn.textContent = noMessages[msgIndex];
 
     // Grow Yes button but cap for mobile
@@ -97,16 +95,22 @@ function handleNoClick() {
     }
 
     // Swap GIF
-    const gifIndex = Math.min(noClickCount, gifStages.length-1);
+    const gifIndex = Math.min(noClickCount, gifStages.length - 1);
     swapGif(gifStages[gifIndex]);
 
-    // Enable runaway **only after the last message** ("You can't catch me anyway 😜")
+    // Increase click count after using it for display
+    noClickCount++;
+
+    // Enable runaway immediately when last message is reached
     if (noClickCount >= noMessages.length && !runawayEnabled) {
         runawayEnabled = true;
         noBtn.style.position = 'fixed';
         noBtn.style.zIndex = '100';
         noBtn.addEventListener('mouseover', runAway);
         noBtn.addEventListener('touchstart', runAway, { passive: true });
+
+        // Start moving the No button right away
+        runAway();
     }
 }
 

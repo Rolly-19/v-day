@@ -38,6 +38,7 @@ const yesBtn = document.getElementById('yes-btn');
 const noBtn = document.getElementById('no-btn');
 const music = document.getElementById('bg-music');
 
+// Start muted to bypass autoplay policy
 music.muted = true;
 music.volume = 0.3;
 music.play().then(() => { music.muted = false }).catch(() => {
@@ -50,7 +51,6 @@ function toggleMusic() {
         musicPlaying = false;
         document.getElementById('music-toggle').textContent = '🔇';
     } else {
-        music.muted = false;
         music.play();
         musicPlaying = true;
         document.getElementById('music-toggle').textContent = '🔊';
@@ -58,13 +58,13 @@ function toggleMusic() {
 }
 
 function handleYesClick() {
-    if (!runawayEnabled) {
-        const msg = yesTeasePokes[Math.min(yesTeasedCount, yesTeasePokes.length-1)];
+    // Show teasing message first, but always allow Yes to work
+    if (yesTeasedCount < yesTeasePokes.length) {
+        const msg = yesTeasePokes[yesTeasedCount];
         yesTeasedCount++;
         showTeaseMessage(msg);
-        return;
     }
-    window.location.href = 'yes.html';
+    window.location.href = 'yes.html'; // always go to yes page
 }
 
 function showTeaseMessage(msg) {
@@ -78,14 +78,14 @@ function showTeaseMessage(msg) {
 function handleNoClick() {
     noClickCount++;
 
-    const msgIndex = Math.min(noClickCount, noMessages.length-1);
+    // Show message based on click count
+    const msgIndex = Math.min(noClickCount - 1, noMessages.length - 1);
     noBtn.textContent = noMessages[msgIndex];
 
-    // Grow Yes button but cap max size
+    // Grow Yes button but cap for mobile
     const currentSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-    const maxSize = window.innerWidth < 500 ? 36 : 50; // cap for mobile
+    const maxSize = window.innerWidth < 500 ? 36 : 50;
     yesBtn.style.fontSize = `${Math.min(currentSize*1.35, maxSize)}px`;
-
     const padY = Math.min(18 + noClickCount*5, window.innerWidth < 500 ? 30 : 40);
     const padX = Math.min(45 + noClickCount*10, window.innerWidth < 500 ? 60 : 90);
     yesBtn.style.padding = `${padY}px ${padX}px`;
@@ -100,29 +100,19 @@ function handleNoClick() {
     const gifIndex = Math.min(noClickCount, gifStages.length-1);
     swapGif(gifStages[gifIndex]);
 
-    // Enable runaway starting from click 5
-    if (noClickCount >= 5 && !runawayEnabled) {
+    // Enable runaway **only after the last message** ("You can't catch me anyway 😜")
+    if (noClickCount >= noMessages.length && !runawayEnabled) {
         runawayEnabled = true;
         noBtn.style.position = 'fixed';
-        noBtn.style.zIndex = '100'; // above Yes button
+        noBtn.style.zIndex = '100';
         noBtn.addEventListener('mouseover', runAway);
         noBtn.addEventListener('touchstart', runAway, { passive: true });
-    }
-
-    // If runaway already enabled, move No button immediately
-    if (runawayEnabled) {
-        runAway();
     }
 }
 
 function swapGif(src) {
     catGif.style.opacity = '0';
     setTimeout(() => { catGif.src = src; catGif.style.opacity = '1'; }, 200);
-}
-
-function enableRunaway() {
-    noBtn.addEventListener('mouseover', runAway);
-    noBtn.addEventListener('touchstart', runAway, { passive: true });
 }
 
 function runAway() {
@@ -135,8 +125,6 @@ function runAway() {
     const randomX = Math.random() * maxX + margin / 2;
     const randomY = Math.random() * maxY + margin / 2;
 
-    noBtn.style.position = 'fixed';
     noBtn.style.left = `${randomX}px`;
     noBtn.style.top = `${randomY}px`;
-    noBtn.style.zIndex = '50';
 }

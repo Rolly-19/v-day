@@ -83,11 +83,11 @@ function handleNoClick() {
 
     // Grow Yes button but cap max size
     const currentSize = parseFloat(window.getComputedStyle(yesBtn).fontSize);
-    const maxSize = 50; // px
+    const maxSize = window.innerWidth < 500 ? 36 : 50; // cap for mobile
     yesBtn.style.fontSize = `${Math.min(currentSize*1.35, maxSize)}px`;
 
-    const padY = Math.min(18 + noClickCount*5, 40);
-    const padX = Math.min(45 + noClickCount*10, 90);
+    const padY = Math.min(18 + noClickCount*5, window.innerWidth < 500 ? 30 : 40);
+    const padX = Math.min(45 + noClickCount*10, window.innerWidth < 500 ? 60 : 90);
     yesBtn.style.padding = `${padY}px ${padX}px`;
 
     // Shrink No button
@@ -96,12 +96,22 @@ function handleNoClick() {
         noBtn.style.fontSize = `${Math.max(noSize*0.85, 10)}px`;
     }
 
+    // Swap GIF
     const gifIndex = Math.min(noClickCount, gifStages.length-1);
     swapGif(gifStages[gifIndex]);
 
+    // Enable runaway starting from click 5
     if (noClickCount >= 5 && !runawayEnabled) {
-        enableRunaway();
         runawayEnabled = true;
+        noBtn.style.position = 'fixed';
+        noBtn.style.zIndex = '100'; // above Yes button
+        noBtn.addEventListener('mouseover', runAway);
+        noBtn.addEventListener('touchstart', runAway, { passive: true });
+    }
+
+    // If runaway already enabled, move No button immediately
+    if (runawayEnabled) {
+        runAway();
     }
 }
 
